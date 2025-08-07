@@ -99,6 +99,41 @@ Para usar o dashboard, você precisará das seguintes credenciais:
 
 ## 🚧 Desenvolvimento
 
+## 🐳 Docker
+
+### Construção e execução local
+
+1. Construa a imagem Docker:
+```bash
+docker build -t clouddash .
+```
+
+2. Execute o contêiner:
+```bash
+docker run -p 3000:3000 clouddash
+```
+
+Ou use o Docker Compose:
+```bash
+docker-compose up -d
+```
+
+3. Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
+
+### Publicação no Easypanel
+
+1. Faça login no seu servidor Easypanel
+2. Clique em "Novo Projeto"
+3. Selecione "Docker" como tipo de projeto
+4. Configure as seguintes opções:
+   - Nome do projeto: CloudDash
+   - Porta: 3000
+   - Repositório Git: URL do seu repositório
+   - Dockerfile: /Dockerfile (caminho relativo ao Dockerfile no repositório)
+5. Clique em "Criar Projeto"
+6. Aguarde a construção e implantação
+7. Acesse o CloudDash através da URL fornecida pelo Easypanel
+
 ### Estrutura do Projeto
 
 ```

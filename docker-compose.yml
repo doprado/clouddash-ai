@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  clouddash:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Você pode adicionar outras variáveis de ambiente aqui
+      # - NEXT_PUBLIC_API_URL=https://api.example.com
+    env_file:
+      - .env
+    restart: unless-stopped
+    # Configuração de volumes (opcional)
+    # volumes:
+    #   - ./data:/app/data

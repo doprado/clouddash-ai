@@ -1,0 +1,19 @@
+# Configuração para Easypanel
+name: clouddash
+
+services:
+  app:
+    image: ${REGISTRY_HOST}/${REGISTRY_USERNAME}/clouddash:${TAG}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
