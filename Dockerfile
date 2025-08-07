@@ -7,31 +7,28 @@ WORKDIR /app
 # Copiar arquivos de configuração
 COPY package.json package-lock.json ./
 
-# Instalar dependências
+# Instalar dependências completas (incluindo dev)
 RUN npm ci --no-cache --no-audit
 
-# Copiar código fonte
+# Copiar o restante do código
 COPY . .
 
-# Construir a aplicação
+# Gerar build da aplicação
 RUN npm run build
 
 # Estágio de produção
 FROM node:20-alpine AS runner
 
-# Definir variáveis de ambiente para produção
+# Definir variáveis de ambiente
 ENV NODE_ENV=production
 
 # Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar apenas os arquivos necessários do estágio de construção
+# Copiar tudo do builder, incluindo node_modules e arquivos compilados
 COPY --from=builder /app ./
 
-# Instalar apenas dependências de produção
-RUN npm install --omit=dev
-
-# Expor a porta que o Next.js usa por padrão
+# Expor a porta padrão do Next.js
 EXPOSE 3000
 
 # Comando para iniciar a aplicação
