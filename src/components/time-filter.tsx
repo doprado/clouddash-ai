@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { TimeFilter } from '@/types/cloudflare';
-import { Calendar, Clock } from 'lucide-react';
+import { type TimeFilter } from '@/types/cloudflare';
+import { Clock } from 'lucide-react';
 
 interface TimeFilterProps {
   selectedFilter: TimeFilter;
