@@ -33,7 +33,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 
 # Instalar apenas dependências de produção
-#RUN npm ci --omit=dev --no-cache --no-audit --production
+RUN npm ci --omit=dev --no-cache --no-audit --production
 
 # Expor a porta que o Next.js usa por padrão
 EXPOSE 3000
