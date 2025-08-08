@@ -6,13 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { TimeFilter } from '@/components/time-filter';
 import { CloudflareCredentials, TimeFilter as TimeFilterType, LogEntry } from '@/types/cloudflare';
 import { CloudflareAPI } from '@/lib/cloudflare-api';
 import { DataProcessor } from '@/lib/data-processor';
-import { Loader2, Users, Brain, TrendingUp, DollarSign } from 'lucide-react';
+import { Loader2, Users, Brain, TrendingUp, DollarSign, Search, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
-import { X } from 'lucide-react';
+import { Charts } from '@/components/charts';
 
 interface DashboardProps {
   credentials: CloudflareCredentials;
@@ -25,6 +26,7 @@ export function Dashboard({ credentials }: DashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [emailFilter, setEmailFilter] = useState<string>('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -50,6 +52,11 @@ export function Dashboard({ credentials }: DashboardProps) {
   const modelStats = DataProcessor.processModelStats(logs, timeFilter);
   const topModels = DataProcessor.getTopModels(logs, timeFilter, 10);
   const selectedUser = userStats.find(u => u.email === selectedUserEmail) || null;
+
+  // Filtrar usuários por email
+  const filteredUserStats = userStats.filter(user =>
+    user.email.toLowerCase().includes(emailFilter.toLowerCase())
+  );
 
   // Debug logs
   useEffect(() => {
@@ -227,6 +234,15 @@ export function Dashboard({ credentials }: DashboardProps) {
         </Card>
       </div>
 
+      {/* Charts */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Gráficos de Consumo Diário</h3>
+          <p className="text-sm text-gray-600">Visualização do custo e uso de tokens por dia</p>
+        </div>
+        <Charts logs={logs} timeFilter={timeFilter} chartTimeFilter="30d" loading={loading} error={error} />
+      </div>
+
       {/* Tabs */}
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
@@ -238,12 +254,45 @@ export function Dashboard({ credentials }: DashboardProps) {
         <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Custo por Usuário</CardTitle>
-              <CardDescription>
-                Análise detalhada do consumo por usuário
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Custo por Usuário</CardTitle>
+                  <CardDescription>
+                    Análise detalhada do consumo por usuário
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Filtrar por email..."
+                      value={emailFilter}
+                      onChange={(e) => setEmailFilter(e.target.value)}
+                      className="w-64 pl-9 pr-8"
+                    />
+                    {emailFilter && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEmailFilter('')}
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
+              {emailFilter && (
+                <div className="mb-4 text-sm text-muted-foreground">
+                  Exibindo {filteredUserStats.length} de {userStats.length} usuários
+                  {filteredUserStats.length === 0 && (
+                    <span className="text-destructive ml-2">Nenhum usuário encontrado com esse email</span>
+                  )}
+                </div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -255,41 +304,49 @@ export function Dashboard({ credentials }: DashboardProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {userStats.map((user) => (
-                    <TableRow key={user.email}>
-                      <TableCell className="font-medium">
-                        <button
-                          className="text-blue-600 hover:underline hover:text-blue-800 transition-colors disabled:opacity-50"
-                          onClick={() => {
-                            if (user) {
-                              setSelectedUserEmail(user.email);
-                              setShowUserModal(true);
-                            }
-                          }}
-                          disabled={loading}
-                        >
-                          {user.email}
-                        </button>
-                      </TableCell>
-                      <TableCell>{DataProcessor.formatCurrency(user.totalCost)}</TableCell>
-                      <TableCell>{DataProcessor.formatTokens(user.totalTokens)}</TableCell>
-                      <TableCell>{DataProcessor.formatNumber(user.requestCount)}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {Object.keys(user.models).slice(0, 3).map((model) => (
-                            <Badge key={model} variant="secondary" className="text-xs">
-                              {model}
-                            </Badge>
-                          ))}
-                          {Object.keys(user.models).length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{Object.keys(user.models).length - 3}
-                            </Badge>
-                          )}
-                        </div>
+                  {filteredUserStats.length > 0 ? (
+                    filteredUserStats.map((user) => (
+                      <TableRow key={user.email}>
+                        <TableCell className="font-medium">
+                          <button
+                            className="text-blue-600 hover:underline hover:text-blue-800 transition-colors disabled:opacity-50"
+                            onClick={() => {
+                              if (user) {
+                                setSelectedUserEmail(user.email);
+                                setShowUserModal(true);
+                              }
+                            }}
+                            disabled={loading}
+                          >
+                            {user.email}
+                          </button>
+                        </TableCell>
+                        <TableCell>{DataProcessor.formatCurrency(user.totalCost)}</TableCell>
+                        <TableCell>{DataProcessor.formatTokens(user.totalTokens)}</TableCell>
+                        <TableCell>{DataProcessor.formatNumber(user.requestCount)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {Object.keys(user.models).slice(0, 3).map((model) => (
+                              <Badge key={model} variant="secondary" className="text-xs">
+                                {model}
+                              </Badge>
+                            ))}
+                            {Object.keys(user.models).length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{Object.keys(user.models).length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        {emailFilter ? 'Nenhum usuário encontrado com esse email' : 'Nenhum usuário encontrado'}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

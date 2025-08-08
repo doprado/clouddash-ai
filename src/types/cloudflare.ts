@@ -20,7 +20,8 @@ export interface LogEntry {
   };
   model: string;
   cost: number;
-  tokens: number;
+  tokens_in: number;
+  tokens_out: number;
   [key: string]: unknown;
 }
 

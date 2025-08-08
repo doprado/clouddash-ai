@@ -1,6 +1,14 @@
 import { LogEntry, UserStats, ModelStats, TimeFilter } from '@/types/cloudflare';
 
 export class DataProcessor {
+  // Converter data UTC para fuso horário local (GMT-3)
+  private static convertUTCToLocal(utcDate: string): Date {
+    const date = new Date(utcDate);
+    // Ajustar para GMT-3 (3 horas a menos que UTC)
+    const localDate = new Date(date.getTime() - (3 * 60 * 60 * 1000));
+    return localDate;
+  }
+
   private static getTimeFilterDate(timeFilter: TimeFilter): Date {
     const now = new Date();
     
@@ -20,11 +28,11 @@ export class DataProcessor {
     }
   }
 
-  private static filterLogsByTime(logs: LogEntry[], timeFilter: TimeFilter): LogEntry[] {
+  static filterLogsByTime(logs: LogEntry[], timeFilter: TimeFilter): LogEntry[] {
     const filterDate = this.getTimeFilterDate(timeFilter);
     
     return logs.filter(log => {
-      const logDate = new Date(log.created_at);
+      const logDate = this.convertUTCToLocal(log.created_at);
       return logDate >= filterDate;
     });
   }
@@ -48,7 +56,7 @@ export class DataProcessor {
 
       const userStats = userMap.get(email)!;
       userStats.totalCost += log.cost || 0;
-      userStats.totalTokens += log.tokens || 0;
+      userStats.totalTokens += (log.tokens_in || 0) + (log.tokens_out || 0);
       userStats.requestCount += 1;
 
       // Process model usage
@@ -62,7 +70,7 @@ export class DataProcessor {
       }
 
       userStats.models[model].cost += log.cost || 0;
-      userStats.models[model].tokens += log.tokens || 0;
+      userStats.models[model].tokens += (log.tokens_in || 0) + (log.tokens_out || 0);
       userStats.models[model].requests += 1;
     });
 
@@ -89,7 +97,7 @@ export class DataProcessor {
 
       const modelStats = modelMap.get(model)!;
       modelStats.totalCost += log.cost || 0;
-      modelStats.totalTokens += log.tokens || 0;
+      modelStats.totalTokens += (log.tokens_in || 0) + (log.tokens_out || 0);
       modelStats.requestCount += 1;
 
       // Process user usage
@@ -102,7 +110,7 @@ export class DataProcessor {
       }
 
       modelStats.users[email].cost += log.cost || 0;
-      modelStats.users[email].tokens += log.tokens || 0;
+      modelStats.users[email].tokens += (log.tokens_in || 0) + (log.tokens_out || 0);
       modelStats.users[email].requests += 1;
     });
 
